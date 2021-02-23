@@ -96,7 +96,6 @@ class CoSSL(nn.Module):
             mask.scatter_(1, idx, 1)
             weighted_mask.scatter_(1, idx, 1)
             score_neg *= score_ref * weighted_mask
-            print(score_ref * weighted_mask)
 
         score = torch.cat([score_pos, score_neg], dim=1)
         mask = torch.cat([torch.ones(q.shape[0], 1).to(mask.device), mask],dim=1)

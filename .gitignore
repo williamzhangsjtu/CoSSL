@@ -1,3 +1,4 @@
 **/features
 **/experiment
 *.pyc
+**/embedding

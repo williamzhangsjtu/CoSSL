@@ -84,15 +84,15 @@ class CoSSL(nn.Module):
 
         mask_idx = indices.unsqueeze(1) == self.IndexQueue.unsqueeze(0)
         mask = mask_idx.to(torch.long)
-        # pick topK samples as positive sample
 
+        # pick topK samples as positive sample
         if self.queue_full:
             score_ref = torch.einsum('bd,dk->bk', 
                 [ref_feats, self.RefQueue.clone().detach()])
-            score_ref[mask.to(torch.bool)] = - np.inf
-            _, idx = torch.topk(score_ref, self.topK, dim=1)
+            tmp = score_ref.clone().detach()
+            tmp[mask.to(torch.bool)] = - np.inf
+            _, idx = torch.topk(tmp, self.topK, dim=1)
             weighted_mask = torch.ones_like(score_neg) * -1
-            score_ref[mask.to(torch.bool)] = 1
             mask.scatter_(1, idx, 1)
             weighted_mask.scatter_(1, idx, 1)
             score_neg *= score_ref * weighted_mask
@@ -105,4 +105,6 @@ class CoSSL(nn.Module):
         
         return score, mask.to(score.device)
 
-        
+    def extract_embedding(self, feats):
+        emb = self.encoder(feats)
+        return nn.functional.normalize(emb, dim=1)

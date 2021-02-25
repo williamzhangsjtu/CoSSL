@@ -99,6 +99,13 @@ def train():
     Average().attach(evaluator, 'Loss')
     Average().attach(trainer, 'Loss')
 
+    @trainer.on(Events.STARTED)
+    def eval_scratch(trainer):
+        evaluator.run(devloader)
+        eval_metric = evaluator.state.metrics['Loss']
+        logger.info('MSE before training: {:<5.2f}'.format(eval_metric))
+        scheduler.step(eval_metric)
+
     @trainer.on(Events.EPOCH_COMPLETED)
     def evaluate(trainer):
         AvgLoss = trainer.state.metrics['Loss']

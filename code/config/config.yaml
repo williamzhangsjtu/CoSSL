@@ -1,13 +1,13 @@
 model: CoSSL
 model_args:
     topK: 5
-    cap_Q: 32 #2048
+    cap_Q: 1024
     dim: 256
 out_dir: experiment/
 audio_h5: ../features/woz_raw.h5
 ref_h5: ../features/woz_emoji.h5
 trainloader_args:
-    batch_size: 4
+    batch_size: 16
     num_workers: 4
     shuffle: True
 devloader_args:
@@ -16,7 +16,7 @@ devloader_args:
     shuffle: False
 optimizer: Adam
 optimizer_args:
-    lr: 0.0001
+    lr: 0.0002
 scheduler: ReduceLROnPlateau
 scheduler_args:
         mode: min

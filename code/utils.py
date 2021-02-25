@@ -27,16 +27,16 @@ def get_index(h5, debug=False):
 
     train, dev = train_test_split(keys, train_size=0.8)
     if debug:
-        train, dev = train[:2], dev[:2]
+        train, dev = train[:10], dev[:10]
 
     return train, dev
 
 def process_fn(type='stft', p=0.5, sr=22050):
     augment_fn = Compose([
-        AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5),
-        TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
-        PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
-        Shift(min_fraction=-0.5, max_fraction=0.5, p=0.5)])
+        AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=p),
+        TimeStretch(min_rate=0.8, max_rate=1.25, p=p),
+        PitchShift(min_semitones=-4, max_semitones=4, p=p),
+        Shift(min_fraction=-0.5, max_fraction=0.5, p=p)])
     win_length = int(20 * sr / 1000)
     if type == 'stft':
         def stft_transform(audio):

@@ -49,7 +49,7 @@ def train():
     train_ids, dev_ids = utils.get_index(
         config['ref_h5'], debug=args.debug)
 
-    process_fn = utils.process_fn(p=config['augment_p'])
+    process_fn = utils.process_fn(**config['audio_args'])
     trainloader = create_dataloader(
         config['audio_h5'], config['ref_h5'], process_fn,
         index=train_ids, **config['trainloader_args']) 
@@ -117,6 +117,9 @@ def train():
         logger.info('Evaluation MSE: {:<5.2f}'.format(eval_metric))
         scheduler.step(eval_metric)
 
+    @trainer.on(Events.EPOCH_COMPLETED(once=config['switch_hard']))
+    def switch2hard(trainer):
+        model.ifhard = True
 
     earlystopping_handler = EarlyStopping(
         patience=config['patience'], trainer=trainer,

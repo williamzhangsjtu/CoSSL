@@ -38,6 +38,7 @@ class CoSSLDataset(Dataset):
         init_pos = self.init_pos[index]
         ref_feats = self.ref[index][i - init_pos] # D
         audio_feats = self.audio[index][str(i - init_pos)][0]
+        audio_feats = audio_feats[:100000] # limit the length
         feats_1 = self.process_fn(audio_feats) # T x D
         feats_2 = self.process_fn(audio_feats) # T x D
 

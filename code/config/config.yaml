@@ -1,22 +1,23 @@
 model: CoSSL
+switch_hard: 20
 model_args:
     topK: 5
-    cap_Q: 1024
-    dim: 256
+    cap_Q: 512
+    dim: 1280
 out_dir: experiment/
 audio_h5: ../features/woz_raw.h5
 ref_h5: ../features/woz_emoji.h5
 trainloader_args:
-    batch_size: 16
-    num_workers: 4
+    batch_size: 32
+    num_workers: 8
     shuffle: True
 devloader_args:
-    batch_size: 4
+    batch_size: 32
     num_workers: 4
-    shuffle: False
+    shuffle: True
 optimizer: Adam
 optimizer_args:
-    lr: 0.0002
+    lr: 0.004
 scheduler: ReduceLROnPlateau
 scheduler_args:
         mode: min
@@ -28,6 +29,8 @@ scheduler_args:
 criterion: WeightedMultiNCELoss
 criterion_args: {}
 save_interval: 10
-patience: 20
+patience: 40
 n_epochs: 100
-augment_p: 0.5
+audio_args:
+    p: 0.5
+    type: lms

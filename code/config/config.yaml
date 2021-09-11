@@ -1,21 +1,15 @@
-model: CoSSL
+model: ReCLR
 switch_hard: 5
 model_args:
     momentum: 0.999
     topK: 5
     cap_Q: 2048
     audio_dim: 256
-    ref_dim: 1024 # 512
+    ref_dim: 512
     out_dim: 256
-out_dir: experiment/MDD/Multi/
-# audio_h5: ../features/daic/woz_lms.h5
-# ref_h5: ../features/daic/woz_ref.h5
-# audio_h5: ../features/biox/biox_raw_audio.hdf5
-# ref_h5: ../features/biox/biox_iemocap_ref.hdf5
-# audio_h5: /mnt/lustre/sjtu/home/pyz99/depression/depa/raw_pretrain_features/lms/20/swb_lms_20.hdf5
-# audio_h5: /mnt/lustre/sjtu/home/pyz99/depression/depa/biox/features/lms/20/BioX.hdf5
-audio_h5: /mnt/lustre/sjtu/home/pyz99/data/raw/MDD/features/biox_lms40_chunk96_0-500.hdf5
-ref_h5: /mnt/lustre/sjtu/home/pyz99/data/high-level/MDD/biox_lms40_chunk96_0-500_highlevel_multi.hdf5
+out_dir: experiment/iemocap/
+audio_h5: mdd_raw.hdf5
+ref_h5: mdd_iemocap.hdf5
 trainloader_args:
     batch_size: 256
     num_workers: 4
@@ -26,7 +20,7 @@ devloader_args:
     shuffle: True
 optimizer: Adam
 optimizer_args:
-    lr: 0.0004
+    lr: 0.00001
 scheduler: ReduceLROnPlateau
 scheduler_args:
         mode: min
@@ -35,13 +29,12 @@ scheduler_args:
         cooldown: 1
         verbose: False
         threshold: 0.01
-# criterion: BCELoss
 criterion: WeightedMultiNCELoss
 criterion_args: 
-    lambd: 0.5
+    lambd: 0.8
 save_interval: 5
 patience: 10
-n_epochs: 20
+n_epochs: 30
 audio_args:
     p: 0.8
     output: lms

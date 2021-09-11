@@ -47,6 +47,69 @@ class MoCoDataset(Dataset):
         return len(self.pos2idx)
 
 
+class CoSSLDataset_2(Dataset):
+    def __init__(self, audio_h5, ref_h5, process_fn=lambda x:x, index=None):
+        self.audio = None
+        self.ref = None
+        self.audio_h5 = audio_h5
+        self.ref_h5 = ref_h5
+        self.process_fn = process_fn
+        
+        # intervals = [0]
+        total = 0
+        if index is None:
+            with h5py.File(audio_h5, 'r') as input:
+                self.index = input.keys()
+                for k in input.keys():
+                    total += len(input[k])
+                    # intervals.append(intervals[-1] + len(input[k]))
+        else:
+            self.index = index
+            with h5py.File(audio_h5, 'r') as input:
+                for k in index:
+                    total += len(input[k])
+                    # intervals.append(intervals[-1] + len(input[k]))
+        # self.intervals = intervals
+        self.total = total
+
+    def __getitem__(self, i):
+        if self.audio is None:
+            self.audio = h5py.File(self.audio_h5, 'r')
+        if self.ref is None:
+            self.ref = h5py.File(self.ref_h5, 'r')
+            
+        index = self.index[np.random.randint(0, len(self.index))]
+        # pos1 = np.random.randint(0, len(self.ref[index]))
+        pos1, pos2 = np.random.choice(len(self.ref[index]), 2)
+        feats_1, feats_2, ref1, ref2 = self.audio[index][pos1],\
+            self.audio[index][pos2], self.ref[index][pos1], self.ref[index][pos2]
+
+        feats_1 = self.process_fn(feats_1) # T x D
+        feats_2 = self.process_fn(feats_2) # T x D
+
+
+        return torch.tensor(feats_1), torch.tensor(feats_2),\
+            torch.tensor(ref1), torch.tensor(ref2), torch.tensor(int(index)).to(torch.long)
+
+    def __len__(self):
+        return self.total
+
+    # def _find_pos(self, i):
+    #     low, high = 0, len(self.index) - 1
+    #     while low < high:
+    #         if high - low <= 1:
+    #             break
+    #         mid = (high + low) // 2
+    #         if self.intervals[mid] > i:
+    #             low = mid + 1
+    #         elif self.intervals[mid] < i:
+    #             high = mid - 1
+    #         else:
+    #             low = mid
+    #             break
+    #     return low
+
+
 
 class CoSSLDataset(Dataset):
     def __init__(self, audio_h5, ref_h5, process_fn=lambda x:x, index=None):
@@ -57,7 +120,7 @@ class CoSSLDataset(Dataset):
         self.process_fn = process_fn
         
         if index is None:
-            with h5py.File(ref_h5, 'r') as input:
+            with h5py.File(audio_h5, 'r') as input:
                 self.index = input.keys()
         else:
             self.index = index
@@ -91,6 +154,15 @@ def collate_fn(batch):
     feats_2 = pad_sequence(feats_2, batch_first=True)
     return torch.stack([feats_1, feats_2], dim=1),\
         torch.stack(ref_feats), torch.tensor(indices).to(torch.long)
+
+# def collate_fn(batch):
+#     batch.sort(key=lambda x: len(x[0]), reverse=True)
+#     feats_1, feats_2, ref_1, ref_2, indices = zip(*batch)
+#     feats_1 = pad_sequence(feats_1, batch_first=True)
+#     feats_2 = pad_sequence(feats_2, batch_first=True)
+#     return torch.stack([feats_1, feats_2], dim=1),\
+#         torch.stack([torch.stack(ref_1), torch.stack(ref_2)], dim=1),\
+#         torch.tensor(indices).to(torch.long)
 
 
 def create_dataloader(audio_h5, ref_h5=None, process_fn=lambda x: x, index=None, **kwargs):

@@ -93,14 +93,12 @@ def train():
                 convert_tensor(ref_feats, device), convert_tensor(indices, device)
             score, mask = model(feats, ref_feats, indices)
             loss = criterion(score, mask)
-        return loss.cpu().item() #, score, mask
+        return loss.cpu().item()
     evaluator = Engine(_evaluate)
 
     pbar = ProgressBar(ncols=75)
     pbar.attach(trainer, 
         output_transform=lambda x: {'loss': x})
-    # Average(output_transform=lambda x: x[0]).attach(evaluator, 'Loss')
-    # Average(output_transform=lambda x: x[0]).attach(trainer, 'Loss')
     Average().attach(evaluator, 'Loss')
     Average().attach(trainer, 'Loss')
 
@@ -116,22 +114,12 @@ def train():
         n_epoch = trainer.state.epoch
         evaluator.run(devloader)
         eval_metric = evaluator.state.metrics['Loss']
-        # _, score, mask = evaluator.state.output
         logger.info("<=== #{:<3} Epoch ===>".format(n_epoch))
         logger.info('Training Loss: {:<5.2f}'.format(AvgLoss))
         logger.info('Evaluation Loss: {:<5.2f}'.format(eval_metric))
         
         if model.ifhard: 
             scheduler.step(eval_metric)
-
-    @trainer.on(Events.EPOCH_COMPLETED(once=config['switch_hard']))
-    def switch2hard(trainer):
-        model.ifhard = True
-        evaluator.run(devloader)
-        eval_metric = evaluator.state.metrics['Loss']
-        logger.info('Loss before Hard Learning: {:<5.2f}'.format(eval_metric))
-        # optimizer.param_groups[0]['lr'] = config['optimizer_args']['lr'] / 10
-
 
     earlystopping_handler = EarlyStopping(
         patience=config['patience'], trainer=trainer,
@@ -149,12 +137,17 @@ def train():
         score_name='loss', n_saved=None,
         global_step_transform=global_step_from_engine(trainer))
 
-    @trainer.on(Events.EPOCH_COMPLETED(once=config['switch_hard']))
+    @trainer.on(Events.EPOCH_COMPLETED(once=2))
     def add_handler(trainer):
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED, earlystopping_handler)
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED, best_checkpoint_handler, {"model": model})
+
+    # evaluator.add_event_handler(
+    #     Events.EPOCH_COMPLETED, earlystopping_handler)
+    # evaluator.add_event_handler(
+    #     Events.EPOCH_COMPLETED, best_checkpoint_handler, {"model": model})
 
     trainer.add_event_handler(
         Events.EPOCH_COMPLETED(every=config['save_interval']),

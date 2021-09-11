@@ -1,5 +1,5 @@
-# ReCLR:
-This project is the source codes for ReCLR.
+# CoSSL:
+This project is the source codes for CoSSL.
 
 
 The main script for the project is [code/main.py](code/main.py), you can run it by: 
